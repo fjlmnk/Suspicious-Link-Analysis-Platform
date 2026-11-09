@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Shield, Loader2 } from 'lucide-react';
+import { api } from '@/services/api';
 
 interface URLInputProps {
-  onSubmit: (url: string) => void | Promise<void>;
+  onSubmit?: (url: string) => void | Promise<void>;
+  onScanSuccess?: (scanId: number) => void;
   loading?: boolean;
 }
 
@@ -15,9 +17,12 @@ function isValidUrl(value: string): boolean {
   }
 }
 
-export default function URLInput({ onSubmit, loading = false }: URLInputProps) {
+export default function URLInput({ onSubmit, onScanSuccess, loading: externalLoading = false }: URLInputProps) {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loading = externalLoading || isSubmitting;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,7 +46,21 @@ export default function URLInput({ onSubmit, loading = false }: URLInputProps) {
     }
 
     setUrl(normalizedUrl);
-    await onSubmit(normalizedUrl);
+
+    try {
+      if (onSubmit) {
+        await onSubmit(normalizedUrl);
+      } else if (onScanSuccess) {
+        setIsSubmitting(true);
+        const res = await api.submitScan(normalizedUrl);
+        onScanSuccess(res.data.id);
+      }
+    } catch (err: any) {
+      const msg = err?.response?.data?.detail || 'Failed to submit URL for scanning. Please try again.';
+      setError(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

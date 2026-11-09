@@ -40,6 +40,15 @@ app.include_router(scans.router, prefix="/api", tags=["URL Scans"])
 app.include_router(reports.router, prefix="/api", tags=["Threat Reports"])
 app.include_router(demo.router, prefix="/api", tags=["Demo Scenarios"])
 
+@app.get("/")
+async def root():
+    return {
+        "service": "Suspicious Link Analysis Platform API",
+        "documentation": "/docs",
+        "health": "/api/health",
+        "frontend": "http://localhost:5173"
+    }
+
 @app.get("/api/health")
 async def health_check():
     return {

@@ -5,7 +5,7 @@ A secure web application for analyzing URLs and detecting malicious websites, ph
 ## Features
 
 - **URL Security Analysis** – Submit URLs for comprehensive threat assessment
-- **Multi-Provider Intelligence** – Aggregates data from VirusTotal and Google Safe Browsing
+- **Multi-Provider Intelligence** – Aggregates data from VirusTotal, Google Safe Browsing, and URLhaus (abuse.ch)
 - **Risk Scoring** – Calculates a 0–100 risk score with SAFE / SUSPICIOUS / DANGEROUS classification
 - **Detailed Reports** – Human-readable threat explanations with PDF export
 - **Scan History** – Browse, search, and filter previous analyses
@@ -26,6 +26,8 @@ A secure web application for analyzing URLs and detecting malicious websites, ph
                              │  │  │ VirusTotal API │  ││
                              │  │  ├────────────────┤  ││
                              │  │  │ Safe Browsing  │  ││
+                             │  │  ├────────────────┤  ││
+                             │  │  │ URLhaus API    │  ││
                              │  │  └────────────────┘  ││
                              │  └─────────────────────┘│
                              │  ┌─────────────────────┐│

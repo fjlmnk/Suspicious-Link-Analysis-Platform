@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.services.threat_analyzer import ThreatAnalyzer
 from app.services.providers.virustotal import VirusTotalProvider
 from app.services.providers.safebrowsing import SafeBrowsingProvider
+from app.services.providers.urlhaus import URLhausProvider
 from app.services.url_validator import URLValidator
 
 logger = logging.getLogger(__name__)
@@ -34,8 +35,13 @@ def get_threat_analyzer() -> ThreatAnalyzer:
         api_endpoint=settings.SAFEBROWSING_ENDPOINT,
         daily_request_limit=settings.SAFEBROWSING_DAILY_LIMIT,
     )
+    urlhaus_provider = URLhausProvider(
+        api_key=settings.URLHAUS_API_KEY,
+        api_endpoint=settings.URLHAUS_ENDPOINT,
+        daily_request_limit=settings.URLHAUS_DAILY_LIMIT,
+    )
     return ThreatAnalyzer(
-        providers=[vt_provider, sb_provider],
+        providers=[vt_provider, sb_provider, urlhaus_provider],
         max_timeout_sec=settings.SCAN_TIMEOUT_SEC,
     )
 

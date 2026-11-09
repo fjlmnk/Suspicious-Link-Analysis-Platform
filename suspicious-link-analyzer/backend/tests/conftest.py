@@ -19,17 +19,9 @@ TestSessionLocal = async_sessionmaker(
 )
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an event loop for the test session."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
-
-@pytest_asyncio.fixture(autouse=True)
+@pytest_asyncio.fixture
 async def setup_database():
-    """Create tables before each test and drop them after."""
+    """Create tables before test and drop after."""
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield

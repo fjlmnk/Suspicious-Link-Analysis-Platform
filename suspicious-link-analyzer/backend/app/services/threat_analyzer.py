@@ -145,6 +145,9 @@ class ThreatAnalyzer:
             elif "Google Safe Browsing" in v.provider_name:
                 if v.is_malicious:
                     score += 30.0
+            elif "URLhaus" in v.provider_name:
+                if v.is_malicious:
+                    score += 35.0
 
             if v.provider_status in ("ERROR", "TIMEOUT", "UNAVAILABLE"):
                 score += 7.5

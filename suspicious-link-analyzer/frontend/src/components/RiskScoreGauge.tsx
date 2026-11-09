@@ -1,136 +1,127 @@
+import React from 'react';
+
 interface RiskScoreGaugeProps {
   score: number;
   size?: number;
 }
 
-export default function RiskScoreGauge({ score, size = 180 }: RiskScoreGaugeProps) {
-  const clampedScore = Math.max(0, Math.min(100, score));
+export default function RiskScoreGauge({ score, size = 200 }: RiskScoreGaugeProps) {
+  const clampedScore = Math.max(0, Math.min(100, Math.round(score)));
 
-  // SVG arc parameters
+  // Semicircle parameters
+  // Coordinate space: 200 wide by 130 high
+  // Center (100, 100), radius = 72, strokeWidth = 14
+  // Arc length = PI * 72 ≈ 226.195
+  const radius = 72;
   const strokeWidth = 14;
-  const radius = (size - strokeWidth) / 2;
-  const cx = size / 2;
-  const cy = size / 2;
+  const cx = 100;
+  const cy = 100;
+  const arcLength = Math.PI * radius; // ~226.195
 
-  // We draw a semicircular arc (180 degrees) from left to right
-  const startAngle = 180; // left side
-  const endAngle = 0; // right side
-  const totalArc = Math.PI; // 180 degrees
-  const scoreAngle = (clampedScore / 100) * totalArc;
+  // Semicircle path from left (28, 100) to right (172, 100)
+  const pathD = `M ${cx - radius} ${cy} A ${radius} ${radius} 0 0 1 ${cx + radius} ${cy}`;
 
-  // Helper to convert angle to SVG coordinates (angle in radians from right/3-o'clock, going CCW for our semicircle)
-  const polarToCartesian = (angleDeg: number) => {
-    const angleRad = (angleDeg * Math.PI) / 180;
-    return {
-      x: cx + radius * Math.cos(angleRad),
-      y: cy - radius * Math.sin(angleRad),
-    };
-  };
+  // Dashoffset: 0% score => arcLength, 100% score => 0
+  const strokeDashoffset = arcLength * (1 - clampedScore / 100);
 
-  // Background arc path (full semicircle top half)
-  const bgStart = polarToCartesian(startAngle);
-  const bgEnd = polarToCartesian(endAngle);
-  const bgArc = `M ${bgStart.x} ${bgStart.y} A ${radius} ${radius} 0 0 1 ${bgEnd.x} ${bgEnd.y}`;
-
-  // Score arc path
-  const scoreDeg = startAngle - (clampedScore / 100) * 180;
-  const scoreEnd = polarToCartesian(scoreDeg);
-  const largeArcFlag = clampedScore > 50 ? 1 : 0;
-  const scoreArc =
-    clampedScore > 0
-      ? `M ${bgStart.x} ${bgStart.y} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${scoreEnd.x} ${scoreEnd.y}`
-      : '';
-
-  // Color based on score
+  // Colors & classification according to specification:
+  // 0-29: Low risk (Green)
+  // 30-69: Medium risk (Amber)
+  // 70-100: High risk (Red)
   const getColor = (): string => {
-    if (clampedScore <= 30) return '#10b981'; // emerald-500
-    if (clampedScore <= 60) return '#f59e0b'; // amber-500
+    if (clampedScore < 30) return '#10b981'; // emerald-500
+    if (clampedScore < 70) return '#f59e0b'; // amber-500
     return '#ef4444'; // red-500
   };
 
   const getLabel = (): string => {
-    if (clampedScore <= 30) return 'Low Risk';
-    if (clampedScore <= 60) return 'Medium Risk';
+    if (clampedScore < 30) return 'Low Risk';
+    if (clampedScore < 70) return 'Medium Risk';
     return 'High Risk';
   };
 
-  const getLabelColor = (): string => {
-    if (clampedScore <= 30) return 'text-emerald-400';
-    if (clampedScore <= 60) return 'text-amber-400';
-    return 'text-red-400';
+  const getLabelClass = (): string => {
+    if (clampedScore < 30) return 'text-emerald-400 bg-emerald-950/60 border-emerald-800/80';
+    if (clampedScore < 70) return 'text-amber-400 bg-amber-950/60 border-amber-800/80';
+    return 'text-rose-400 bg-rose-950/60 border-rose-800/80';
   };
 
   const color = getColor();
-
-  // Gradient ID unique per instance
-  const gradientId = `gauge-gradient-${score}`;
+  const filterId = `gauge-glow-${Math.round(score)}`;
 
   return (
-    <div className="flex flex-col items-center">
-      <svg width={size} height={size / 2 + 30} viewBox={`0 0 ${size} ${size / 2 + 30}`}>
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#10b981" />
-            <stop offset="50%" stopColor="#f59e0b" />
-            <stop offset="100%" stopColor="#ef4444" />
-          </linearGradient>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+    <div className="flex flex-col items-center select-none">
+      <div className="relative" style={{ width: size, height: (size * 130) / 200 }}>
+        <svg
+          viewBox="0 0 200 130"
+          className="w-full h-full overflow-visible"
+        >
+          <defs>
+            <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="3.5" floodColor={color} floodOpacity="0.45" />
+            </filter>
+          </defs>
 
-        {/* Background arc */}
-        <path
-          d={bgArc}
-          fill="none"
-          stroke="#1e293b"
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-        />
-
-        {/* Score arc */}
-        {scoreArc && (
+          {/* Background Track Arc */}
           <path
-            d={scoreArc}
+            d={pathD}
             fill="none"
-            stroke={color}
+            stroke="#1e293b"
             strokeWidth={strokeWidth}
             strokeLinecap="round"
-            filter="url(#glow)"
-            className="transition-all duration-1000 ease-out"
           />
-        )}
 
-        {/* Score number in center */}
-        <text
-          x={cx}
-          y={cy - 10}
-          textAnchor="middle"
-          dominantBaseline="central"
-          className="font-bold"
-          fill={color}
-          fontSize={size / 4}
-        >
-          {clampedScore}
-        </text>
+          {/* Animated Value Arc */}
+          {clampedScore > 0 && (
+            <path
+              d={pathD}
+              fill="none"
+              stroke={color}
+              strokeWidth={strokeWidth}
+              strokeLinecap="round"
+              strokeDasharray={arcLength}
+              strokeDashoffset={strokeDashoffset}
+              filter={`url(#${filterId})`}
+              style={{
+                transition: 'stroke-dashoffset 0.9s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s ease',
+              }}
+            />
+          )}
 
-        {/* /100 label */}
-        <text
-          x={cx}
-          y={cy + 15}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fill="#64748b"
-          fontSize={size / 12}
-        >
-          / 100
-        </text>
-      </svg>
-      <p className={`text-sm font-semibold mt-1 ${getLabelColor()}`}>{getLabel()}</p>
+          {/* Center Score Value */}
+          <text
+            x={cx}
+            y={cy - 12}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill={color}
+            fontSize="34"
+            fontWeight="800"
+            fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+          >
+            {clampedScore}
+          </text>
+
+          {/* Center "/ 100" Label */}
+          <text
+            x={cx}
+            y={cy + 14}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fill="#64748b"
+            fontSize="12"
+            fontWeight="500"
+            fontFamily="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+          >
+            / 100
+          </text>
+        </svg>
+      </div>
+
+      {/* Pill Badge with Risk Label */}
+      <span className={`mt-2 px-3 py-0.5 rounded-full text-xs font-semibold border ${getLabelClass()}`}>
+        {getLabel()}
+      </span>
     </div>
   );
 }

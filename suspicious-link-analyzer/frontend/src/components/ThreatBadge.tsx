@@ -3,11 +3,14 @@ import { ScanStatus, ThreatLevel } from '@/types';
 
 interface ThreatBadgeProps {
   threatLevel?: ThreatLevel;
+  level?: ThreatLevel;
   status?: ScanStatus;
   size?: 'sm' | 'md' | 'lg';
 }
 
-export default function ThreatBadge({ threatLevel, status, size = 'md' }: ThreatBadgeProps) {
+export default function ThreatBadge({ threatLevel, level, status, size = 'md' }: ThreatBadgeProps) {
+  const actualLevel = threatLevel ?? level;
+
   // If status is not COMPLETED, show status-based badge
   if (status === ScanStatus.PENDING) {
     return (
@@ -28,7 +31,7 @@ export default function ThreatBadge({ threatLevel, status, size = 'md' }: Threat
   }
 
   // Threat level badges
-  if (threatLevel === ThreatLevel.SAFE) {
+  if (actualLevel === ThreatLevel.SAFE) {
     return (
       <span className={`inline-flex items-center gap-1.5 font-medium rounded-full border threat-safe ${sizeClasses(size)}`}>
         <ShieldCheck className={iconSize(size)} />
@@ -37,7 +40,7 @@ export default function ThreatBadge({ threatLevel, status, size = 'md' }: Threat
     );
   }
 
-  if (threatLevel === ThreatLevel.SUSPICIOUS) {
+  if (actualLevel === ThreatLevel.SUSPICIOUS) {
     return (
       <span className={`inline-flex items-center gap-1.5 font-medium rounded-full border threat-suspicious ${sizeClasses(size)}`}>
         <ShieldAlert className={iconSize(size)} />
@@ -46,7 +49,7 @@ export default function ThreatBadge({ threatLevel, status, size = 'md' }: Threat
     );
   }
 
-  if (threatLevel === ThreatLevel.DANGEROUS) {
+  if (actualLevel === ThreatLevel.DANGEROUS) {
     return (
       <span className={`inline-flex items-center gap-1.5 font-semibold rounded-full border threat-dangerous animate-glow ${sizeClasses(size)}`}>
         <Skull className={iconSize(size)} />

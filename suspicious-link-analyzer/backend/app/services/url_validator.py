@@ -42,8 +42,16 @@ class URLValidator:
 
         url = url.strip()
 
-        # 2. Add scheme if missing
-        if not re.match(r"^https?://", url, re.IGNORECASE):
+        # 2. Check for explicit unsupported protocols (ftp://, javascript:, data:, etc.)
+        protocol_match = re.match(r"^([a-zA-Z][a-zA-Z0-9+\-.]*):", url)
+        if protocol_match:
+            scheme = protocol_match.group(1).lower()
+            if scheme not in ("http", "https"):
+                return False, url, [f"Invalid scheme '{scheme}'. Only http and https are allowed."]
+        else:
+            # Scheme missing: check for whitespace or missing dot
+            if " " in url or "." not in url:
+                return False, url, ["Malformed URL: not a valid web address"]
             url = "https://" + url
 
         # 3. Parse
@@ -58,6 +66,8 @@ class URLValidator:
 
         # 5. Validate hostname
         hostname = parsed.hostname
+        if not hostname or " " in hostname or "." not in hostname:
+            return False, url, ["URL has no valid hostname"]
         if not hostname:
             return False, url, ["URL has no hostname"]
 
