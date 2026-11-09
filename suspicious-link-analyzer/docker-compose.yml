@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite+aiosqlite:///./suspicious_links.db
+      - SECRET_KEY=${SECRET_KEY:-default-secret-change-in-production}
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY:-}
+      - SAFEBROWSING_API_KEY=${SAFEBROWSING_API_KEY:-}
+      - VIRUSTOTAL_ENDPOINT=https://www.virustotal.com/api/v3
+      - SAFEBROWSING_ENDPOINT=https://safebrowsing.googleapis.com/v4
+      - MAX_SCANS_PER_HOUR=20
+      - SCAN_TIMEOUT_SEC=30
+      - VIRUSTOTAL_DAILY_LIMIT=500
+      - SAFEBROWSING_DAILY_LIMIT=10000
+      - DEMO_MODE_ENABLED=true
+      - SECURITY_TEAM_EMAIL=security@company.com
+    volumes:
+      - backend-data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  backend-data:
